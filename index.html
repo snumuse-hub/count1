@@ -640,14 +640,12 @@ function finishAll(){
 }
 let particles=[],fxRaf=null,celebTimer=null;
 function celebrate(){
-  clap(12);
   beep(523,0.2);setTimeout(()=>beep(659,0.2),150);setTimeout(()=>beep(784,0.3),300);
   fxLayer.style.display="block";fxCanvas.width=innerWidth;fxCanvas.height=innerHeight;
   doneCard.classList.add("show");
   spawnFirework();
   const burst=setInterval(spawnFirework,400);
   fxAnim();
-  let ci=0;const clapInt=setInterval(()=>{ci++;clap(6);if(ci>=8)clearInterval(clapInt);},1200);
   setTimeout(()=>clearInterval(burst),8000);
   celebTimer=setTimeout(closeCelebration,10000);
 }
