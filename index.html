@@ -60,13 +60,10 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
 .ph-tag{display:inline-block;padding:6px 14px;border-radius:999px;border:1px solid rgba(55,230,164,0.4);font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.5px;}
 
 /* 정확도 게이지 */
-.gauge-wrap{width:36px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;}
-.gauge-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.3px;writing-mode:vertical-rl;transform:rotate(180deg);}
-.gauge-bar{flex:1;width:20px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid var(--line);position:relative;overflow:hidden;}
-.gauge-fill{position:absolute;bottom:0;left:0;right:0;border-radius:10px;transition:height .12s ease,background .2s;background:linear-gradient(to top,#37e6a4,#4dffb8);}
-.gauge-fill.mid{background:linear-gradient(to top,#ffcf5c,#ffe08a);}
-.gauge-fill.low{background:linear-gradient(to top,#ff6b6b,#ff9999);}
-.gauge-pct{font-size:13px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;}
+.gauge-wrap{width:56px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;}
+.gauge-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;writing-mode:vertical-lr;transform:rotate(0deg);}
+.gauge-canvas{flex:1;width:48px;display:block;}
+.gauge-pct{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;}
 
 /* 오버레이 */
 .overlay-top{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;z-index:3;}
@@ -134,16 +131,14 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
   </header>
   <section class="glass settings">
     <h2>운동 설정</h2>
-    <div class="row">
-      <div class="field"><label>세트당 횟수</label>
-        <div class="stepper"><button data-step="reps" data-d="-1">−</button><input id="reps" type="number" value="15" min="1" inputmode="numeric"><button data-step="reps" data-d="1">+</button></div>
-      </div>
-      <div class="field"><label>세트 수</label>
-        <div class="stepper"><button data-step="sets" data-d="-1">−</button><input id="sets" type="number" value="3" min="1" inputmode="numeric"><button data-step="sets" data-d="1">+</button></div>
-      </div>
+    <div class="field" style="margin-bottom:10px;"><label>세트 수</label>
+      <div class="stepper"><button data-step="sets" data-d="-1">−</button><input id="sets" type="number" value="" min="1" inputmode="numeric" placeholder="-"><button data-step="sets" data-d="1">+</button></div>
+    </div>
+    <div class="field" style="margin-bottom:10px;"><label>세트당 횟수</label>
+      <div class="stepper"><button data-step="reps" data-d="-1">−</button><input id="reps" type="number" value="" min="1" inputmode="numeric" placeholder="-"><button data-step="reps" data-d="1">+</button></div>
     </div>
     <div class="field"><label>세트 사이 휴식 (초)</label>
-      <div class="stepper"><button data-step="rest" data-d="-5">−</button><input id="rest" type="number" value="30" min="0" inputmode="numeric"><button data-step="rest" data-d="5">+</button></div>
+      <div class="stepper"><button data-step="rest" data-d="-5">−</button><input id="rest" type="number" value="" min="0" inputmode="numeric" placeholder="-"><button data-step="rest" data-d="5">+</button></div>
     </div>
   </section>
   <div class="glass guide"><h3>📋 자세 안내 &amp; 인식 조건</h3><p id="guideText"></p></div>
@@ -169,6 +164,7 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
         <div class="ph-main">한계를 넘어라<br>지금 이 순간이<br>당신을 만든다</div>
         <div class="ph-sub">카메라를 허용하고<br>운동을 시작하세요</div>
         <div class="ph-tag">⚡ LET'S GO</div>
+        <button id="camPermBtn" style="margin-top:18px;background:linear-gradient(135deg,var(--accent),#21c98a);border:0;border-radius:14px;padding:14px 28px;font-size:15px;font-weight:800;color:#04130d;cursor:pointer;width:100%;max-width:220px;">📷 카메라 허용</button>
       </div>
 
       <div class="overlay-top">
@@ -188,9 +184,7 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
     <!-- 정확도 게이지 -->
     <div class="gauge-wrap">
       <div class="gauge-label">정확도</div>
-      <div class="gauge-bar" id="gaugeBar">
-        <div class="gauge-fill" id="gaugeFill" style="height:0%"></div>
-      </div>
+      <canvas class="gauge-canvas" id="gaugeCanvas"></canvas>
       <div class="gauge-pct" id="gaugePct">0</div>
     </div>
   </div>
@@ -328,7 +322,7 @@ const video=$("video"),canvas=$("poseCanvas"),ctx=canvas.getContext("2d");
 const placeholder=$("placeholder"),statusPill=$("statusPill"),phasePill=$("phasePill"),phaseTxt=$("phaseTxt");
 const camBtn=$("camBtn"),camLabel=$("camLabel"),restBanner=$("restBanner"),restNumEl=$("restNum");
 const countV=$("countV"),targetV=$("targetV"),setV=$("setV"),setsV=$("setsV"),angleV=$("angleV"),timerEl=$("timer");
-const gaugeFill=$("gaugeFill"),gaugePct=$("gaugePct");
+const gaugePct=$("gaugePct");
 const fxLayer=$("fxLayer"),fxCanvas=$("fxCanvas"),fxCtx=fxCanvas.getContext("2d"),doneCard=$("doneCard");
 const stageEl=$("stageEl");
 let drawUtils=null;
@@ -355,7 +349,7 @@ document.querySelectorAll("[data-step]").forEach(b=>{
   b.addEventListener("click",()=>{
     const m={reps:$("reps"),sets:$("sets"),rest:$("rest")};
     const el=m[b.dataset.step];
-    let v=parseInt(el.value||0)+parseInt(b.dataset.d);
+    let v=(parseInt(el.value)||0)+parseInt(b.dataset.d);
     if(v<parseInt(el.min||0))v=parseInt(el.min||0);
     el.value=v;syncT();
   });
@@ -375,13 +369,31 @@ $("p2next").addEventListener("click",async()=>{
   countV.textContent="0";setV.textContent="1";timerEl.textContent="00:00";angleV.textContent="--";
   setGauge(0);
   showPage("p3");
-  await startCamera();
+  setTimeout(initGaugeCanvas,50);
+  // 카메라는 placeholder의 "카메라 허용" 버튼으로 시작
+  if(cameraPermitted){
+    // 이미 허용된 경우 바로 시작
+    await startCamera();
+  } else {
+    // 버튼 보여주기 (placeholder 유지)
+    statusPill.textContent="📷 카메라 허용 필요";
+    camPermBtn.textContent="📷 카메라 허용";
+    camPermBtn.disabled=false;
+  }
 });
 $("p3back").addEventListener("click",()=>{stopAll();showPage("p2");});
 $("stopBtn").addEventListener("click",()=>{
   stopAll();
   count=0;curSet=1;countV.textContent="0";setV.textContent="1";timerEl.textContent="00:00";angleV.textContent="--";
   setGauge(0);showPage("p2");
+});
+
+/* ── 카메라 권한 버튼 ── */
+const camPermBtn=$("camPermBtn");
+camPermBtn.addEventListener("click",async()=>{
+  camPermBtn.textContent="⏳ 허용 중...";
+  camPermBtn.disabled=true;
+  await startCamera();
 });
 
 /* ── 카메라 (권한 한 번만) ── */
@@ -470,12 +482,123 @@ function analyzeFrame(res){
   if(counted)addCount();
 }
 
-/* ── 게이지 ── */
-function setGauge(pct){
-  const p=clamp(Math.round(pct),0,100);
-  gaugeFill.style.height=p+"%";
+/* ── 게이지 (canvas 찢어진 스타일) ── */
+const gaugeCanvas=$("gaugeCanvas");
+const gaugeCtx=gaugeCanvas.getContext("2d");
+let gaugeCurrentPct=0;
+let gaugeRaf=null;
+
+// 고정 시드로 찢어진 엣지 포인트 생성 (매 프레임 동일하게 유지)
+const TORN_PTS=(()=>{
+  const pts=[];const steps=28;
+  for(let i=0;i<=steps;i++){
+    const jagged=(Math.random()-0.5)*10;
+    pts.push(jagged);
+  }
+  return pts;
+})();
+
+function initGaugeCanvas(){
+  const wrap=gaugeCanvas.parentElement;
+  const h=wrap.clientHeight-60; // 위아래 여백
+  gaugeCanvas.width=48;
+  gaugeCanvas.height=Math.max(h,120);
+}
+
+function drawGauge(pct){
+  const w=gaugeCanvas.width,h=gaugeCanvas.height;
+  gaugeCtx.clearRect(0,0,w,h);
+
+  const fillH=h*(pct/100);
+  const emptyH=h-fillH;
+
+  // 색상
+  let fillColor;
+  if(pct>=70) fillColor={top:"#4dffb8",bot:"#37e6a4"};
+  else if(pct>=35) fillColor={top:"#ffe08a",bot:"#ffcf5c"};
+  else fillColor={top:"#ff9999",bot:"#ff6b6b"};
+
+  const steps=TORN_PTS.length-1;
+
+  // ── 빈 부분 (위쪽) ──
+  gaugeCtx.beginPath();
+  gaugeCtx.moveTo(0,0);
+  gaugeCtx.lineTo(w,0);
+  gaugeCtx.lineTo(w,emptyH);
+  // 찢어진 하단 엣지 (오른쪽→왼쪽)
+  for(let i=steps;i>=0;i--){
+    const x=(i/steps)*w;
+    const y=emptyH+TORN_PTS[i];
+    gaugeCtx.lineTo(x,y);
+  }
+  gaugeCtx.closePath();
+  gaugeCtx.fillStyle="rgba(255,255,255,0.06)";
+  gaugeCtx.fill();
+  // 테두리 (찢어진 선)
+  gaugeCtx.beginPath();
+  for(let i=0;i<=steps;i++){
+    const x=(i/steps)*w;
+    const y=emptyH+TORN_PTS[i];
+    i===0?gaugeCtx.moveTo(x,y):gaugeCtx.lineTo(x,y);
+  }
+  gaugeCtx.strokeStyle="rgba(255,255,255,0.25)";
+  gaugeCtx.lineWidth=1.5;
+  gaugeCtx.stroke();
+
+  // ── 채워진 부분 (아래쪽) ──
+  if(pct>0){
+    const grad=gaugeCtx.createLinearGradient(0,h,0,emptyH);
+    grad.addColorStop(0,fillColor.bot);
+    grad.addColorStop(1,fillColor.top);
+
+    gaugeCtx.beginPath();
+    // 찢어진 상단 엣지 (왼쪽→오른쪽)
+    for(let i=0;i<=steps;i++){
+      const x=(i/steps)*w;
+      const y=emptyH+TORN_PTS[i];
+      i===0?gaugeCtx.moveTo(x,y):gaugeCtx.lineTo(x,y);
+    }
+    gaugeCtx.lineTo(w,h);
+    gaugeCtx.lineTo(0,h);
+    gaugeCtx.closePath();
+    gaugeCtx.fillStyle=grad;
+    gaugeCtx.fill();
+
+    // 글로우 효과
+    gaugeCtx.shadowColor=fillColor.top;
+    gaugeCtx.shadowBlur=10;
+    gaugeCtx.beginPath();
+    for(let i=0;i<=steps;i++){
+      const x=(i/steps)*w;
+      const y=emptyH+TORN_PTS[i];
+      i===0?gaugeCtx.moveTo(x,y):gaugeCtx.lineTo(x,y);
+    }
+    gaugeCtx.strokeStyle=fillColor.top;
+    gaugeCtx.lineWidth=2;
+    gaugeCtx.stroke();
+    gaugeCtx.shadowBlur=0;
+  }
+
+  // 외곽 테두리
+  gaugeCtx.strokeStyle="rgba(255,255,255,0.1)";
+  gaugeCtx.lineWidth=1;
+  gaugeCtx.strokeRect(0,0,w,h);
+}
+
+function setGauge(targetPct){
+  const p=clamp(Math.round(targetPct),0,100);
   gaugePct.textContent=p;
-  gaugeFill.className="gauge-fill"+(p>=70?" ":(p>=35?" mid":" low"));
+  gaugePct.style.color=p>=70?"#37e6a4":p>=35?"#ffcf5c":"#ff6b6b";
+  // 부드럽게 애니메이션
+  if(gaugeRaf)cancelAnimationFrame(gaugeRaf);
+  function animate(){
+    const diff=p-gaugeCurrentPct;
+    if(Math.abs(diff)<0.5){gaugeCurrentPct=p;drawGauge(p);return;}
+    gaugeCurrentPct+=diff*0.15;
+    drawGauge(gaugeCurrentPct);
+    gaugeRaf=requestAnimationFrame(animate);
+  }
+  animate();
 }
 
 /* ── 카운트 ── */
@@ -500,7 +623,7 @@ function updateTimer(){
 function stopAll(){
   running=false;if(rafId)cancelAnimationFrame(rafId);clearInterval(timerInt);
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-  cameraPermitted=false;
+  // cameraPermitted는 유지 — 다음 세트/종목에서 팝업 안 뜸
   video.srcObject=null;ctx.clearRect(0,0,canvas.width,canvas.height);
   placeholder.style.display="flex";phasePill.style.display="none";
   statusPill.textContent="⚪ 준비 중";resting=false;restBanner.style.display="none";
