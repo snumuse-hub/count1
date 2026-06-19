@@ -44,50 +44,55 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
 .guide p{font-size:13px;line-height:1.8;color:var(--txt);}
 .key{color:var(--accent);font-weight:700;}
 
-/* 카메라 무대 + 게이지 */
-.stage-wrap{display:flex;gap:10px;margin-bottom:12px;align-items:stretch;}
-.stage{position:relative;border-radius:18px;overflow:hidden;flex:1;aspect-ratio:3/4;background:#05070d;}
+/* 카메라 무대 — 풀너비, 게이지/카운트 내부 */
+.stage-wrap{margin-bottom:12px;}
+.stage{position:relative;border-radius:18px;overflow:hidden;width:100%;aspect-ratio:3/4;background:#05070d;}
 .stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .stage.mirror video,.stage.mirror canvas{transform:scaleX(-1);}
 
 /* 동기부여 placeholder */
 .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;
-  background:linear-gradient(160deg,#0d1f3c 0%,#0b1a10 50%,#0b0f1a 100%);}
+  background:linear-gradient(160deg,#0d1f3c 0%,#0b1a10 50%,#0b0f1a 100%);z-index:2;}
 .ph-icon{font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(55,230,164,0.5));}
 .ph-main{font-size:22px;font-weight:900;letter-spacing:-0.5px;line-height:1.2;margin-bottom:10px;
   background:linear-gradient(135deg,#37e6a4,#4d8cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .ph-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px;}
 .ph-tag{display:inline-block;padding:6px 14px;border-radius:999px;border:1px solid rgba(55,230,164,0.4);font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.5px;}
 
-/* 정확도 게이지 */
-.gauge-wrap{width:56px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;}
-.gauge-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;writing-mode:vertical-lr;transform:rotate(0deg);}
-.gauge-canvas{flex:1;width:48px;display:block;}
-.gauge-pct{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;}
+/* 정확도 게이지 — 화면 안 오른쪽 */
+.gauge-inside{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3;padding:8px 0;}
+.gauge-label-box{background:rgba(0,0,0,0.55);border:1px solid var(--line);border-radius:8px;
+  padding:4px 8px;font-size:11px;font-weight:700;color:var(--txt);letter-spacing:.3px;white-space:nowrap;}
+.gauge-canvas{width:32px;display:block;}
+.gauge-pct{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;
+  background:rgba(0,0,0,0.55);border-radius:8px;padding:3px 6px;}
+
+/* 카운트 오버레이 — 화면 안 하단 */
+.count-inside{position:absolute;bottom:54px;left:0;right:0;text-align:center;z-index:3;pointer-events:none;}
+.count-num{font-size:72px;font-weight:900;letter-spacing:-3px;line-height:1;
+  color:#fff;text-shadow:0 2px 16px rgba(0,0,0,0.7),-1px -1px 0 rgba(0,0,0,0.5);}
+.count-num span{color:var(--accent);}
+.count-num small{font-size:28px;color:rgba(255,255,255,0.6);font-weight:700;}
 
 /* 오버레이 */
-.overlay-top{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;z-index:3;}
-.overlay-bot{position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:8px;z-index:3;}
+.overlay-top{position:absolute;top:10px;left:10px;right:54px;display:flex;gap:8px;z-index:3;}
+.overlay-bot{position:absolute;bottom:10px;left:10px;right:54px;display:flex;gap:8px;z-index:3;}
 .pill{background:rgba(0,0,0,0.5);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12px;display:flex;align-items:center;gap:5px;}
 .pill b{color:var(--accent);}
-
-/* 카메라 전환 버튼 — 크게 */
 .cambtn{background:rgba(0,0,0,0.55);border:1px solid var(--line);border-radius:12px;
   padding:8px 14px;font-size:15px;color:var(--txt);margin-left:auto;cursor:pointer;
   display:flex;align-items:center;gap:6px;font-weight:700;}
 .cambtn:active{background:rgba(0,0,0,0.8);}
-
 .restbanner{position:absolute;inset:0;background:rgba(5,7,13,0.82);z-index:4;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
 .rnum{font-size:72px;font-weight:800;color:var(--warn);}
 
-/* 스탯: SET 위, COUNT 아래 */
-.stats{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
-.stats-row{display:flex;gap:10px;}
+/* 스탯: SET만 아래 유지 */
+.stats{display:flex;gap:10px;margin-bottom:10px;}
 .stat{flex:1;padding:12px 14px;text-align:center;}
 .stat .k{font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:600;letter-spacing:.3px;}
 .stat .v{font-size:32px;font-weight:800;line-height:1;letter-spacing:-1px;}
 .stat .v small{font-size:15px;color:var(--muted);font-weight:600;}
-#cntBox .v{color:var(--accent);}
 #setBox .v{color:var(--accent2);}
 
 .meta{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;margin-bottom:12px;font-size:13px;}
@@ -152,7 +157,7 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
     <h1 id="p3title">운동</h1><span class="badge">창원예술학교</span>
   </header>
 
-  <!-- 카메라 + 게이지 -->
+  <!-- 카메라 (풀너비, 게이지+카운트 내부) -->
   <div class="stage-wrap">
     <div class="stage glass" id="stageEl">
       <video id="video" playsinline muted></video>
@@ -167,41 +172,42 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
         <button id="camPermBtn" style="margin-top:18px;background:linear-gradient(135deg,var(--accent),#21c98a);border:0;border-radius:14px;padding:14px 28px;font-size:15px;font-weight:800;color:#04130d;cursor:pointer;width:100%;max-width:220px;">📷 카메라 허용</button>
       </div>
 
+      <!-- 오버레이 상단 -->
       <div class="overlay-top">
         <span class="pill" id="statusPill">⚪ 준비 중</span>
         <button class="cambtn" id="camBtn">📷 <span id="camLabel">전면</span></button>
       </div>
+
+      <!-- 카운트 — 화면 안 하단 -->
+      <div class="count-inside">
+        <div class="count-num"><span id="countV">0</span><small> / <span id="targetV">-</span></small></div>
+      </div>
+
+      <!-- 오버레이 하단 -->
       <div class="overlay-bot">
         <span class="pill" id="phasePill" style="display:none;">자세: <b id="phaseTxt">-</b></span>
       </div>
+
+      <!-- 정확도 게이지 — 화면 안 오른쪽 -->
+      <div class="gauge-inside">
+        <div class="gauge-label-box">정확도</div>
+        <canvas class="gauge-canvas" id="gaugeCanvas"></canvas>
+        <div class="gauge-pct" id="gaugePct">0</div>
+      </div>
+
       <div class="restbanner" id="restBanner">
         <div style="color:var(--muted);font-size:14px;">휴식</div>
         <div class="rnum" id="restNum">30</div>
         <div style="color:var(--muted);font-size:13px;">다음 세트를 준비하세요</div>
       </div>
     </div>
-
-    <!-- 정확도 게이지 -->
-    <div class="gauge-wrap">
-      <div class="gauge-label">정확도</div>
-      <canvas class="gauge-canvas" id="gaugeCanvas"></canvas>
-      <div class="gauge-pct" id="gaugePct">0</div>
-    </div>
   </div>
 
-  <!-- SET 먼저, COUNT 아래 -->
+  <!-- SET만 화면 아래 -->
   <div class="stats">
-    <div class="stats-row">
-      <div class="stat glass" id="setBox">
-        <div class="k">SET</div>
-        <div class="v"><span id="setV">1</span><small> / <span id="setsV">3</span></small></div>
-      </div>
-    </div>
-    <div class="stats-row">
-      <div class="stat glass" id="cntBox">
-        <div class="k">COUNT</div>
-        <div class="v" style="font-size:52px;letter-spacing:-2px;"><span id="countV">0</span><small style="font-size:22px;"> / <span id="targetV">15</span></small></div>
-      </div>
+    <div class="stat glass" id="setBox">
+      <div class="k">SET</div>
+      <div class="v"><span id="setV">1</span><small> / <span id="setsV">-</span></small></div>
     </div>
   </div>
 
@@ -500,10 +506,10 @@ const TORN_PTS=(()=>{
 })();
 
 function initGaugeCanvas(){
-  const wrap=gaugeCanvas.parentElement;
-  const h=wrap.clientHeight-60; // 위아래 여백
-  gaugeCanvas.width=48;
-  gaugeCanvas.height=Math.max(h,120);
+  const stage=document.getElementById("stageEl");
+  const h=Math.max(stage.clientHeight*0.5,120);
+  gaugeCanvas.width=32;
+  gaugeCanvas.height=Math.round(h);
 }
 
 function drawGauge(pct){
