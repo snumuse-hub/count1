@@ -200,7 +200,7 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
     <div class="stats-row">
       <div class="stat glass" id="cntBox">
         <div class="k">COUNT</div>
-        <div class="v"><span id="countV">0</span><small> / <span id="targetV">15</span></small></div>
+        <div class="v" style="font-size:52px;letter-spacing:-2px;"><span id="countV">0</span><small style="font-size:22px;"> / <span id="targetV">15</span></small></div>
       </div>
     </div>
   </div>
@@ -391,6 +391,7 @@ $("stopBtn").addEventListener("click",()=>{
 /* ── 카메라 권한 버튼 ── */
 const camPermBtn=$("camPermBtn");
 camPermBtn.addEventListener("click",async()=>{
+  initSpeech(); // 사용자 인터랙션으로 음성 초기화
   camPermBtn.textContent="⏳ 허용 중...";
   camPermBtn.disabled=true;
   await startCamera();
@@ -634,6 +635,7 @@ function stopAll(){
 function finishAll(){
   running=false;if(rafId)cancelAnimationFrame(rafId);clearInterval(timerInt);
   $("doneMsg").textContent=EXERCISES[selEx].name+" · "+totalSets+"세트 · "+(targetReps*totalSets)+"회 · "+timerEl.textContent;
+  setTimeout(()=>speakDone(totalSets,targetReps),600); // 폭죽 후 음성
   celebrate();setTimeout(stopAll,400);
 }
 let particles=[],fxRaf=null,celebTimer=null;
@@ -675,8 +677,37 @@ function beep(freq,dur){
 function clap(times=8){
   try{const a=audio();for(let i=0;i<times;i++){const t=a.currentTime+i*.12+Math.random()*.03;const buf=a.createBuffer(1,a.sampleRate*.05,a.sampleRate);const d=buf.getChannelData(0);for(let j=0;j<d.length;j++)d[j]=(Math.random()*2-1)*Math.pow(1-j/d.length,2);const src=a.createBufferSource();src.buffer=buf;const g=a.createGain();g.gain.value=.5;const f=a.createBiquadFilter();f.type="bandpass";f.frequency.value=1500;src.connect(f);f.connect(g);g.connect(a.destination);src.start(t);}}catch(e){}
 }
+/* 음성 (모바일 안전 버전) */
+let speechReady=false;
+function initSpeech(){
+  // 사용자 인터랙션 후 한 번 초기화해야 모바일에서 동작
+  if(speechReady)return;
+  try{
+    const u=new SpeechSynthesisUtterance("");
+    u.volume=0;
+    speechSynthesis.speak(u);
+    speechReady=true;
+  }catch(e){}
+}
+function speak(text,rate=1.1,pitch=1.1){
+  try{
+    initSpeech();
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="ko-KR";u.rate=rate;u.pitch=pitch;u.volume=1;
+    // 모바일에서 voices 로딩 타이밍 문제 해결
+    const go=()=>speechSynthesis.speak(u);
+    if(speechSynthesis.getVoices().length)go();
+    else{speechSynthesis.addEventListener("voiceschanged",go,{once:true});setTimeout(go,300);}
+  }catch(e){}
+}
 function speakCount(n){
-  try{const word=n<=30?KO_NUM[n]:String(n);const u=new SpeechSynthesisUtterance(word);u.lang="ko-KR";u.rate=1.1;u.pitch=1.1;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}
+  const word=n<=30?KO_NUM[n]:String(n);
+  speak(word,1.2,1.1);
+}
+function speakDone(sets,reps){
+  const total=sets*reps;
+  speak(`${sets}세트 ${total}회 완료! 대단해요!`,0.95,1.05);
 }
 
 /* ── 유틸 ── */
