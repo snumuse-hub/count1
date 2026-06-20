@@ -64,9 +64,12 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
   display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3;padding:8px 0;}
 .gauge-label-box{background:rgba(0,0,0,0.55);border:1px solid var(--line);border-radius:8px;
   padding:4px 8px;font-size:11px;font-weight:700;color:var(--txt);letter-spacing:.3px;white-space:nowrap;}
-.gauge-canvas{width:32px;display:block;}
-.gauge-pct{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums;
-  background:rgba(0,0,0,0.55);border-radius:8px;padding:3px 6px;}
+.gauge-canvas{width:44px;display:block;}
+.gauge-pct{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;
+  background:rgba(0,0,0,0.6);border-radius:10px;padding:5px 10px;line-height:1;}
+
+/* 카메라 시작 전(placeholder 표시 중)엔 카운트·게이지 숨김 — 겹침 방지 */
+.stage.idle .count-inside,.stage.idle .gauge-inside{display:none;}
 
 /* 카운트 오버레이 — 화면 안 하단 */
 .count-inside{position:absolute;bottom:54px;left:0;right:0;text-align:center;z-index:3;pointer-events:none;}
@@ -159,7 +162,7 @@ header h1{font-size:20px;font-weight:800;letter-spacing:-.5px;}
 
   <!-- 카메라 (풀너비, 게이지+카운트 내부) -->
   <div class="stage-wrap">
-    <div class="stage glass" id="stageEl">
+    <div class="stage glass idle" id="stageEl">
       <video id="video" playsinline muted></video>
       <canvas id="poseCanvas"></canvas>
 
@@ -402,17 +405,11 @@ $("p2next").addEventListener("click",async()=>{
   countV.textContent="0";setV.textContent="1";timerEl.textContent="00:00";angleV.textContent="--";
   setGauge(0);
   showPage("p3");
+  stageEl.classList.add("idle"); // 카메라 켜지기 전 카운트/게이지 숨김
   setTimeout(initGaugeCanvas,50);
-  // 카메라는 placeholder의 "카메라 허용" 버튼으로 시작
-  if(cameraPermitted){
-    // 이미 허용된 경우 바로 시작
-    await startCamera();
-  } else {
-    // 버튼 보여주기 (placeholder 유지)
-    statusPill.textContent="📷 카메라 허용 필요";
-    camPermBtn.textContent="📷 카메라 허용";
-    camPermBtn.disabled=false;
-  }
+  // "운동 시작" 클릭(사용자 제스처)에서 바로 카메라 요청 → 권한창 한 번만 뜨고 즉시 연동
+  initSpeech();
+  await startCamera();
 });
 $("p3back").addEventListener("click",()=>{stopAll();showPage("p2");});
 $("stopBtn").addEventListener("click",()=>{
@@ -446,15 +443,12 @@ async function startCamera(){
       drawUtils=new DrawingUtils(ctx);
     }
     // 카메라 권한은 처음 한 번만 요청, 이후 전면/후면은 track constraint로 교체
-    if(!cameraPermitted){
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode,width:{ideal:720},height:{ideal:960}},audio:false});
-      cameraPermitted=true;
-    } else {
-      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode,width:{ideal:720},height:{ideal:960}},audio:false});
-    }
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facingMode},width:{ideal:720},height:{ideal:960}},audio:false});
+    cameraPermitted=true;
     video.srcObject=stream;await video.play();
     canvas.width=video.videoWidth;canvas.height=video.videoHeight;
     placeholder.style.display="none";phasePill.style.display="flex";
+    stageEl.classList.remove("idle"); // 카운트/게이지 표시
     statusPill.textContent="🟢 분석 중";running=true;
     startTime=Date.now();timerInt=setInterval(updateTimer,1000);loop();
   }catch(e){statusPill.textContent="⚠ 카메라 오류";alert("카메라를 사용할 수 없습니다.\nhttps 주소에서 열었는지 확인하세요.\n\n"+e.message);}
@@ -465,25 +459,28 @@ function applyMirror(){
   if(camLabel)camLabel.textContent=facingMode==="user"?"전면":"후면";
 }
 
-/* 카메라 전환 — 같은 권한으로 track만 교체, 팝업 안 뜸 */
+/* 카메라 전환 — 기존 스트림 먼저 해제 후 재요청 (안드로이드 점유 충돌 방지) */
 async function switchCamera(){
+  if(!running)return;
   facingMode=facingMode==="user"?"environment":"user";
   applyMirror();
-  if(!running)return;
   try{
-    // 기존 track 교체 (권한 재요청 없이)
-    const newStream=await navigator.mediaDevices.getUserMedia({video:{facingMode,width:{ideal:720},height:{ideal:960}},audio:false});
-    const oldTracks=stream?stream.getTracks():[];
-    video.srcObject=newStream;
-    await video.play();
-    oldTracks.forEach(t=>t.stop()); // 교체 후 기존 track 해제
-    stream=newStream;
+    // 1) 기존 카메라 완전히 해제 (안 하면 안드로이드에서 새 카메라 못 켬)
+    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+    video.srcObject=null;
+    // 2) 새 방향으로 다시 요청
+    const ns=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facingMode},width:{ideal:720},height:{ideal:960}},audio:false});
+    stream=ns;video.srcObject=ns;await video.play();
     canvas.width=video.videoWidth;canvas.height=video.videoHeight;
   }catch(e){
-    // 전환 실패시 원래 방향으로 복구
-    facingMode=facingMode==="user"?"environment":"user";
-    applyMirror();
-    alert("카메라 전환 실패: "+e.message);
+    // 실패 시 원래 방향으로 복구
+    facingMode=facingMode==="user"?"environment":"user";applyMirror();
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facingMode},width:{ideal:720},height:{ideal:960}},audio:false});
+      video.srcObject=stream;await video.play();
+      canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    }catch(_){}
+    alert("카메라 전환 실패: "+(e.message||e));
   }
 }
 camBtn.addEventListener("click",switchCamera);
@@ -538,8 +535,8 @@ const TORN_PTS=(()=>{
 
 function initGaugeCanvas(){
   const stage=document.getElementById("stageEl");
-  const h=Math.max(stage.clientHeight*0.5,120);
-  gaugeCanvas.width=32;
+  const h=Math.max(stage.clientHeight*0.66,180);
+  gaugeCanvas.width=44;
   gaugeCanvas.height=Math.round(h);
 }
 
@@ -664,6 +661,7 @@ function stopAll(){
   // cameraPermitted는 유지 — 다음 세트/종목에서 팝업 안 뜸
   video.srcObject=null;ctx.clearRect(0,0,canvas.width,canvas.height);
   placeholder.style.display="flex";phasePill.style.display="none";
+  stageEl.classList.add("idle"); // 카운트/게이지 숨김
   statusPill.textContent="⚪ 준비 중";resting=false;restBanner.style.display="none";
   setGauge(0);
 }
